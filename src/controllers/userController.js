@@ -91,3 +91,37 @@ export const deleteUser = async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
+export const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const [userRow] = await db
+      .promise()
+      .query('SELECT * FROM Users WHERE email = ?', [email]);
+
+    if (userRow.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    } else {
+      const user = userRow[0];
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: 'Invalid Password' });
+      } else {
+        res.json({
+          message: 'Login Successful',
+          user: {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+          },
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching user:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};

@@ -5,6 +5,7 @@ import {
   registerUser,
   updateUser,
   deleteUser,
+  loginUser,
 } from '../controllers/userController.js';
 
 // ✅ Get All Users
@@ -21,6 +22,6 @@ router.delete('/:id', deleteUser);
 
 // Login and Register
 
-// router.post('/login', loginUser);
+router.post('/login', loginUser);
 
 export default router;
