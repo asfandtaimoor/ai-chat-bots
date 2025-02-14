@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "npm run test",
-    "dev": "nodemon ./src/app.js"
+    "dev": "node init && nodemon ./src/app.js"
   },
   "author": "Taimoor Salyhal",
   "license": "ISC",
