@@ -1,5 +1,22 @@
 import db from '../config/db.js';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: '30d',
+    }
+  );
+};
+
 // Get All Users
 export const getAllUser = async (req, res) => {
   try {
@@ -109,8 +126,11 @@ export const loginUser = async (req, res) => {
       if (!isPasswordValid) {
         return res.status(401).json({ message: 'Invalid Password' });
       } else {
+        const token = generateToken(user);
+
         res.json({
           message: 'Login Successful',
+          token: token,
           user: {
             id: user.id,
             firstName: user.firstName,

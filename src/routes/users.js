@@ -8,6 +8,8 @@ import {
   loginUser,
 } from '../controllers/userController.js';
 
+import authenticate from '../../middlewares/authMiddleware.js';
+
 // ✅ Get All Users
 router.get('/', getAllUser);
 
@@ -23,5 +25,13 @@ router.delete('/:id', deleteUser);
 // Login and Register
 
 router.post('/login', loginUser);
+
+router.get('/profile', authenticate, (req, res) => {
+  res.json({ message: 'User profile data', user: req.user });
+});
+
+router.get('/orders', authenticate, (req, res) => {
+  res.send('User orders data');
+});
 
 export default router;
