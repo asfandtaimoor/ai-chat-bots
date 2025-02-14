@@ -39,6 +39,7 @@ export const registerUser = async (req, res) => {
     const { firstName, lastName, email, password } = req.body;
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+
     // Check if user already exists
     const [existingUser] = await db
       .promise()
@@ -55,29 +56,41 @@ export const registerUser = async (req, res) => {
         [firstName, lastName, email, hashedPassword]
       );
 
-    res
-      .status(201)
-      .json({ message: 'User created successfully', userId: result.insertId });
+    const newUser = {
+      id: result.insertId,
+      firstName,
+      lastName,
+      email,
+    };
+
+    const token = generateToken(newUser);
+
+    res.status(201).json({
+      message: 'User created successfully',
+      userId: result.insertId,
+      token: token,
+    });
   } catch (err) {
     console.error('Error creating user:', err);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-// update User
+// Update User
 export const updateUser = async (req, res) => {
   const userId = req.params.id;
   const { firstName, lastName, password } = req.body;
 
   try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const [results] = await db
       .promise()
       .query(
-        'UPDATE Users SET firstName = ?, lastName = ?,   password = ? WHERE id = ?',
-        [firstName, lastName, password, userId]
+        'UPDATE Users SET firstName = ?, lastName = ?, password = ? WHERE id = ?',
+        [firstName, lastName, hashedPassword, userId]
       );
 
-    console.log(results);
     if (results.affectedRows === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -109,6 +122,7 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+// Login User
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -119,27 +133,27 @@ export const loginUser = async (req, res) => {
 
     if (userRow.length === 0) {
       return res.status(404).json({ message: 'User not found' });
-    } else {
-      const user = userRow[0];
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-
-      if (!isPasswordValid) {
-        return res.status(401).json({ message: 'Invalid Password' });
-      } else {
-        const token = generateToken(user);
-
-        res.json({
-          message: 'Login Successful',
-          token: token,
-          user: {
-            id: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-          },
-        });
-      }
     }
+
+    const user = userRow[0];
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid Password' });
+    }
+
+    const token = generateToken(user);
+
+    res.json({
+      message: 'Login Successful',
+      token: token,
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      },
+    });
   } catch (err) {
     console.error('Error fetching user:', err);
     res.status(500).json({ error: 'Internal Server Error' });
