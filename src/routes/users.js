@@ -1,42 +1,37 @@
 import express from 'express';
-import db from '../config/db.js';
-
 const router = express.Router();
+import {
+  getAllUser,
+  registerUser,
+  updateUser,
+  deleteUser,
+  loginUser,
+} from '../controllers/userController.js';
+
+import authenticate from '../../middlewares/authMiddleware.js';
 
 // ✅ Get All Users
-router.get('/', async (req, res) => {
-  try {
-    const [results] = await db.promise().query('SELECT * FROM Users');
+router.get('/', getAllUser);
 
-    if (results.length === 0) {
-      return res.status(404).json({ message: 'There are no Users' });
-    }
+// ✅ Create User
+router.post('/register', registerUser);
 
-    res.json(results);
-  } catch (err) {
-    console.error('Error fetching users:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+// ✅ Update User
+router.put('/:id', updateUser);
 
 // ✅ Delete a user by ID
-router.delete('/:id', async (req, res) => {
-  const userId = req.params.id;
+router.delete('/:id', deleteUser);
 
-  try {
-    const [results] = await db
-      .promise()
-      .query('DELETE FROM Users WHERE id = ?', [userId]);
+// Login and Register
 
-    if (results.affectedRows === 0) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+router.post('/login', loginUser);
 
-    res.json({ message: 'User deleted successfully' });
-  } catch (err) {
-    console.error('Error deleting user:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
+router.get('/profile', authenticate, (req, res) => {
+  res.json({ message: 'User profile data', user: req.user });
+});
+
+router.get('/orders', authenticate, (req, res) => {
+  res.send('User orders data');
 });
 
 export default router;
