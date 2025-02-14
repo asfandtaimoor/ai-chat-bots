@@ -1,6 +1,6 @@
 import express from 'express';
 import db from '../config/db.js';
-
+import bcrypt from 'bcrypt';
 const router = express.Router();
 
 // ✅ Get All Users
@@ -23,7 +23,8 @@ router.get('/', async (req, res) => {
 router.post('', async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
-
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
     // Check if user already exists
     const [existingUser] = await db
       .promise()
@@ -37,7 +38,7 @@ router.post('', async (req, res) => {
       .promise()
       .query(
         'INSERT INTO Users (firstName, lastName, email, password) VALUES (?, ?, ?, ?)',
-        [firstName, lastName, email, password]
+        [firstName, lastName, email, hashedPassword]
       );
 
     res
